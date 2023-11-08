@@ -1,23 +1,26 @@
 <template>
     <div class="container">
         <h1>Will ai replace your job?</h1>
+        <h3>A report compiled by ai</h3>
         <p class="paragraph">{{ introParagraph }}</p>
         <br>
-        <v-row align="center" no-gutters>
+        <v-row allign="center" no-gutters>
             <v-col>
                 <p>How will AI affect being a(n)</p>
             </v-col>
             <v-col>
-                <v-text-field v-model="occupation" placeholder="occupation" density="compact" active="selectOccupationActive"></v-text-field>
+                <v-text-field v-model="occupation" placeholder="occupation" density="compact" :disabled="occupationDisabled"></v-text-field>
             </v-col>
             <v-col>
                 <p> ?</p>
             </v-col>
             <v-col>
-                <v-btn @click="validateOccupation" class="btn btn-primary" active="selectOccupationActive">Find out</v-btn>
+                <v-btn @click="fillReport" class="btn btn-primary" :disabled="occupationDisabled">Find out</v-btn>
             </v-col>
         </v-row>
     </div>
+    <v-alert color="error" icon="$error" v-show="error" :title="errorTitle" :text="errorText">
+    </v-alert>
     <v-card v-show="validOccupation">
       <v-toolbar
         color="primary"
@@ -65,6 +68,7 @@
           <v-window-item value="summary">
             <v-card flat>
               <v-card-text>
+                <h2>How ai will impact a {{ aiOccupation }}</h2>
                 <p>
                     {{ summaryText }}
                 </p>
@@ -126,8 +130,11 @@ export default {
             effectively.',
             occupation: '',
             aiOccupation: '',
-            selectOccupationActive: true,
+            occupationDisabled: false,
             validOccupation: false,
+            error: false,
+            errorTitle: '',
+            errorText: '',
             summaryText: '',
             humanityText: '',
             aiThreatsText: '',
@@ -151,29 +158,50 @@ export default {
             })
         },
         // Confirm that the user entered a valid occupation
-        validateOccupation() {
-            this.selectOccupationActive = false;
-            const path = 'http://localhost:5001/validate-occupation';
-            const payload = { occupation: this.occupation };
-            axios.post(path, payload)
-            .then((res) => {
-                this.aiOccupation = res.data.response;
-                if(this.aiOccupation != "invalid job") {
+        async validateOccupation() {
+            try {
+                this.occupationDisabled = true;
+                this.error = false;
+                const path = 'http://localhost:5001/validate-occupation';
+                const payload = { occupation: this.occupation };
+                const response = await axios.post(path, payload);
+                this.aiOccupation = response.data.response;
+
+                if (this.aiOccupation !== "invalid job") {
                     this.validOccupation = true;
+                } else {
+                    console.log("Invalid occupation selected.");
+                    this.occupationDisabled = false;
+                    this.errorTitle = "Invalid Occupation";
+                    this.errorText = "I am unable to generate an occupational risk report for " + this.occupation;
+                    this.error = true;
                 }
-                else {
-                    console.log("invalid occupation selected. Please try again.")
-                    this.selectOccupationActive = true;
-                }
-            })
-            .catch((error) => {
+            } catch (error) {
                 console.log(error);
-            })
+                this.occupationDisabled = false;
+                this.errorTitle = "Error";
+                this.errorText = "Unable to connect to the server.";
+                this.error = true;
+            }
+            return this.validOccupation;
         },
-        fillReport() {
-            this.validateOccupation();
-            if(this.aiOccupation != "invalid job" && this.aiOccupation != "") {
-                console.log("continue");
+
+        async fillReport() {
+            const isValid = await this.validateOccupation();
+            if (isValid) {
+                this.fillParagraph("summary-intro");
+            }
+            console.log(this.validOccupation);
+        },
+
+        async fillParagraph(section) {
+            try {
+                const path = 'http://localhost:5001/fill-paragraph';
+                const payload = { occupation: this.occupation, section: section };
+                const response = await axios.post(path, payload);
+                this.summaryText = response.data.response;
+            } catch (error) {
+                console.log(error);
             }
         }
     }

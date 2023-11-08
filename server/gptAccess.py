@@ -1,5 +1,5 @@
 from openai import OpenAI
-from server.prompts import formatValidateOccupationPrompt
+from server.prompts import formatValidateOccupationPrompt, formatFillParagraph, getPromptBySection
 
 def ask_ai(prompt, maxTokens=50, model="gpt-3.5-turbo"):
   client = OpenAI()
@@ -14,4 +14,9 @@ def ask_ai(prompt, maxTokens=50, model="gpt-3.5-turbo"):
 
 def validateOccupation(occupation):
   prompt = formatValidateOccupationPrompt(occupation)
+  return(ask_ai(prompt))
+
+def fillParagraph(occupation, section):
+  sectionPrompt = getPromptBySection(occupation, section)
+  prompt = formatFillParagraph(sectionPrompt)
   return(ask_ai(prompt))

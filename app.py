@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from server.gptAccess import validateOccupation
+from server.gptAccess import validateOccupation, fillParagraph
 # instantiate the app
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -38,5 +38,17 @@ def validate():
     occupation = post_data.get('occupation')
     response_object['query'] = 'validate job: ' + occupation
     response_object['response'] = validateOccupation(occupation)
+    print(response_object)
+    return jsonify(response_object)
+
+# generate the data to fill a component of the report
+@app.route('/fill-paragraph', methods=['POST'])
+def paragraph():
+    response_object = {'status': 'success'}
+    post_data = request.get_json()
+    occupation = post_data.get('occupation')
+    section = post_data.get('section')
+    response_object['query'] = 'fill paragraph: ' + section + "for occupation: " + occupation
+    response_object['response'] = fillParagraph(occupation, section)
     print(response_object)
     return jsonify(response_object)
