@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
-from server.gptAccess import ask_ai
-
+from server.gptAccess import validateOccupation
 # instantiate the app
 app = Flask(__name__)
 app.config.from_object(__name__)
@@ -17,13 +16,27 @@ def ping_pong():
 if __name__ == '__main__':
     app.run()
 
-# prompt input
-@app.route('/question', methods=['POST'])
-def question():
+
+# generic prompt input
+
+# @app.route('/ask-ai', methods=['POST'])
+# def question():
+#     response_object = {'status': 'success'}
+#     post_data = request.get_json()
+#     query = post_data.get('prompt')
+#     response_object['query'] = query
+#     response_object['response'] = ask_ai(query)
+#     print(response_object)
+#     return jsonify(response_object)
+
+
+# validate the occupation being entered by the user
+@app.route('/validate-occupation', methods=['POST'])
+def validate():
     response_object = {'status': 'success'}
     post_data = request.get_json()
-    query = post_data.get('prompt')
-    response_object['query'] = query
-    response_object['response'] = ask_ai(query)
+    occupation = post_data.get('occupation')
+    response_object['query'] = 'validate job: ' + occupation
+    response_object['response'] = validateOccupation(occupation)
     print(response_object)
     return jsonify(response_object)
